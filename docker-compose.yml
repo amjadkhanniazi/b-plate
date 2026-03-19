@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: s-plate-backend
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    environment:
+      NODE_ENV: production
+      PORT: 5002
+      # ── Option A: Use VPS shared-mongodb ──────────────────────────────────
+      # The backend container uses the Docker bridge gateway to reach shared-mongodb
+      # Replace dbname/user/pass with your actual values
+      MONGO_URI: mongodb://user:pass@172.17.0.1:27018/myproject
+      # ── Option B: Use a private mongodb service in this compose file ──────
+      # Uncomment the mongodb service below and use this URI instead:
+      # MONGO_URI: mongodb://admin:secret@mongodb:27017/myproject?authSource=admin
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE: 7d
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRE: 30d
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    # extra_hosts gives this container access to the host machine's bridge IP
+    # Required when connecting to shared-mongodb via 172.17.0.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5002/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── Option B: Private MongoDB (uncomment if not using shared-mongodb) ───────
+  # mongodb:
+  #   image: mongo:7
+  #   container_name: s-plate-mongodb
+  #   restart: unless-stopped
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: admin
+  #     MONGO_INITDB_ROOT_PASSWORD: secret
+  #     MONGO_INITDB_DATABASE: myproject
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   # Do NOT expose port externally unless you need remote access
+
+# volumes:
+#   mongodb_data:
