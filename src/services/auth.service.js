@@ -2,6 +2,16 @@ const User = require("../models/User");
 const { generateTokens, verifyRefreshToken } = require("../utils/jwt");
 const AppError = require("../utils/AppError");
 
+
+// Strip sensitive fields before returning user data
+const sanitize = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  createdAt: user.createdAt,
+});
+
 const register = async ({ name, email, password }) => {
   const existing = await User.findOne({ email });
   if (existing) throw new AppError("Email already registered", 409);
@@ -56,13 +66,6 @@ const logout = async (userId) => {
   await User.findByIdAndUpdate(userId, { refreshToken: null });
 };
 
-// Strip sensitive fields before returning user data
-const sanitize = (user) => ({
-  _id: user._id,
-  name: user.name,
-  email: user.email,
-  role: user.role,
-  createdAt: user.createdAt,
-});
+
 
 module.exports = { register, login, refresh, logout };

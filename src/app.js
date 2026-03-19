@@ -13,7 +13,7 @@ const errorHandler = require("./middleware/errorHandler");
 const logger = require("./utils/logger");
 
 const app = express();
-
+app.set("query parser", "simple");
 // ─── Security Headers ─────────────────────────────────────────────────────────
 app.use(helmet());
 
